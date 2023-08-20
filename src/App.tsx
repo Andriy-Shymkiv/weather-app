@@ -1,54 +1,68 @@
-import './App.css';
+import { Box, Button, OutlinedInput, Typography, styled } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { WeatherData } from './types/WeatherData';
+import { getWeather } from './api/weather';
 
-import React, { useState } from 'react';
+const StyledInput = styled(OutlinedInput)(({ theme }) => ({
+  marginBottom: theme.spacing(6),
+}));
 
-import logo from './logo.svg';
+const StyledForm = styled('form')(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: theme.spacing(6),
+}));
 
-function App() {
-  const [count, setCount] = useState(0);
+export const App = (): JSX.Element => {
+  const [weatherData, setWeatherData] = useState<WeatherData>();
+  const [city, setCity] = useState<string>('ternopil');
+
+  useEffect(() => {
+    const getAndSetWeather = async (): Promise<void> => {
+      const weather = await getWeather(city);
+      setWeatherData(weather);
+    };
+
+    try {
+      getAndSetWeather();
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    const weather = await getWeather(city.trim());
+    setWeatherData(weather);
+  };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p className="header">
-          🚀 Vite + React + Typescript 🤘 & <br />
-          Eslint 🔥+ Prettier
-        </p>
+    <Box>
+      <Typography variant="h3" mb={4}>
+        Weather App
+      </Typography>
 
-        <div className="body">
-          <button onClick={() => setCount((count) => count + 1)}>
-            🪂 Click me : {count}
-          </button>
+      <StyledForm onSubmit={onSubmit}>
+        <StyledInput size="small" fullWidth name="city" value={city} onChange={(e) => setCity(e.target.value)} />
+        <Button type="submit" variant="outlined">
+          search
+        </Button>
+      </StyledForm>
 
-          <p> Don&apos;t forgot to install Eslint and Prettier in Your Vscode.</p>
+      <Box textAlign={'center'} mb={2}>
+        <Typography>city: {weatherData?.location.name}</Typography>
+        <Typography>region: {weatherData?.location.region}</Typography>
+        <Typography>country: {weatherData?.location.country}</Typography>
+        <Typography>local time: {weatherData?.location.localtime}</Typography>
+      </Box>
 
-          <p>
-            Mess up the code in <code>App.tsx </code> and save the file.
-          </p>
-          <p>
-            <a
-              className="App-link"
-              href="https://reactjs.org"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learn React
-            </a>
-            {' | '}
-            <a
-              className="App-link"
-              href="https://vitejs.dev/guide/features.html"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Vite Docs
-            </a>
-          </p>
-        </div>
-      </header>
-    </div>
+      <Box textAlign={'center'}>
+        <Typography>celsius temperature: {weatherData?.current.temp_c}</Typography>
+        <Typography>fahrenheit temperature: {weatherData?.current.temp_f}</Typography>
+        <Typography>description: {weatherData?.current.condition.text}</Typography>
+      </Box>
+    </Box>
   );
-}
-
-export default App;
+};
